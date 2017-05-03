@@ -15,3 +15,4 @@ OANC <- readtext("*.txt", docvarsfrom=c("filenames"))
 OANC_corpus <- corpus(OANC)
 
 OANC_dfm <- dfm(OANC_corpus)
+
