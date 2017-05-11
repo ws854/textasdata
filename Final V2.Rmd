@@ -45,7 +45,8 @@ BNC_select_domain <- c("social_science","world_affairs","arts","leisure","commer
 
 BNC_sub_corpus <- corpus_subset(BNC_sub_corpus,domain %in% BNC_select_domain)
 
-BNC_dfm <- dfm(BNC_sub_corpus,stem = F, remove_punct = TRUE , tolower = T)
+BNC_dfm <- dfm(BNC_sub_corpus,stem = F,remove_punct = TRUE , tolower = T)
+
 ```
 
 
@@ -85,20 +86,62 @@ t.test(BNC_FRE,OANC_FRE)
 
 
 ```{r}
-BNC_feature <- colnames(as.matrix(BNC_dfm))
-OANC_feature <- colnames(as.matrix(OANC_dfm))
+
+BNC_feature <- featnames(BNC_dfm)
+OANC_feature <- featnames(OANC_dfm)
 #words appear in both cropus 
 joint_feature <- intersect(BNC_feature,OANC_feature)
 
-joint_feature_dict <- dictionary(joint = joint_feature)
+#joint dfm 
+BNC_joint_dfm <- dfm_select(BNC_dfm, features = joint_feature,remove_punct = TRUE)
+OANC_joint_dfm <- dfm_select(OANC_dfm, features = joint_feature, remove_punct = TRUE)
 
-#recreaet dfm for both cropus by only selecting common words 
-BNC_joint_dfm <- dfm(BNC_sub_corpus,select = joint_feature_dict) 
-OANC_joint_dfm <- dfm(OANC_sub_corpus,select = joint_feature)
+# caluclate the % 
+BNC_freq <- colSums(as.matrix(BNC_joint_dfm))
+OANC_freq <- colSums(as.matrix(OANC_joint_dfm))
 
+sum_BNC <- sum(BNC_freq)
+sum_OANC <- sum(OANC_freq)
 
-#colSums(BNC_dfm)
-OANC_joint_dfm
-#differnt_BNC <-setdiff(BNC_feature, OANC_feature)
+BNC_weight <- BNC_freq/sum_BNC
+OANC_weight <- OANC_freq/sum_OANC
 ```
+```{r}
+a <- sort(BNC_freq,decreasing = TRUE)[101:200]
+b <- sort(OANC_freq,decreasing = TRUE)[101:200]
+
+```
+
+
+```{r}
+a <- sort(BNC_freq,decreasing = TRUE)[1:10000]
+b <- sort(OANC_freq,decreasing = TRUE)[1:10000]
+
+setdiff(names(sort(BNC_freq,decreasing = TRUE)[1:1000]),names(sort(OANC_freq,decreasing = TRUE)[1:1000]))
+
+
+
+#newlist <- list(oldlist, list(someobj))
+
+british_feature <- c()
+american_feature <- c()
+british_bucket <- c()
+american_bucket <- c()
+number_diff <- c()
+
+for (i in 1:2) {
+  british <-sort(BNC_freq,decreasing = TRUE)[1+((i-1)*100):100*i]
+  american <- sort(OANC_freq,decreasing = TRUE)[1+((i-1)*100):100*i]
+  
+  british_feature <-c(british_feature,british) 
+  american_feature <- c(american_feature,american)
+  
+}
+
+length(setdiff(names(a),names(b))) == length(setdiff(names(b),names(a)))
+
+sort(BNC_freq,decreasing = TRUE)[1+((i-1)*100):100*i]
+```
+
+
 
