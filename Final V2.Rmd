@@ -74,7 +74,7 @@ print(var(OANC_FRE))
 ```{r}
 BNC_FRE <- textstat_readability(texts(BNC_sub_corpus, groups = "id"), "Flesch")
 
-hist(BNC_FRE, breaks=1000, col="red",xlim = c(0,100))
+hist(BNC_FRE, breaks=500, col="red",xlim = c(0,100))
 print(length((BNC_FRE)))
 print(mean(BNC_FRE))
 print(var(BNC_FRE))
@@ -106,42 +106,139 @@ sum_OANC <- sum(OANC_freq)
 BNC_weight <- BNC_freq/sum_BNC
 OANC_weight <- OANC_freq/sum_OANC
 ```
-```{r}
-a <- sort(BNC_freq,decreasing = TRUE)[101:200]
-b <- sort(OANC_freq,decreasing = TRUE)[101:200]
 
+### Choose the top 10000 features and sorted by difference ranking in American English and British English 
+
+```{r}
+top_british<- sort(BNC_freq,decreasing = TRUE)[1:10000]
+top_american <- sort(OANC_freq,decreasing = TRUE)[1:10000]
+
+#in descending rank with respect to the occruance 
+british_df<- data.frame(features = names(top_british),rank = seq(10000,1,-1))
+american_df<- data.frame(features = names(top_american),rank = seq(10000,1,-1))
+
+full_df <- merge(x = american_df,y = british_df, by = "features", all = TRUE)
+colnames(full_df) = c("features","rank_in_american","rank_in_british")
+full_df["difference"] = abs(full_df["rank_in_american"] - full_df["rank_in_british"])
+
+full_df[with(full_df, order(-difference)), ]
+```
+
+# look into where does these words pop up 
+
+
+# for words that doesn't show up: 
+```{r}
+# in top 100 
+print(setdiff(names(top_american)[1:100],names(top_british)[1:100])) 
+print(setdiff(names(top_british)[1:100],names(top_american)[1:100])) 
+
+# in top 300 
+print(setdiff(names(top_american)[100:300],names(top_british)[100:300])) 
+print(setdiff(names(top_british)[100:300],names(top_american)[100:300])) 
 ```
 
 
+# compute the words difference in each language 
 ```{r}
-a <- sort(BNC_freq,decreasing = TRUE)[1:10000]
-b <- sort(OANC_freq,decreasing = TRUE)[1:10000]
+diff_pct <- c()
 
-setdiff(names(sort(BNC_freq,decreasing = TRUE)[1:1000]),names(sort(OANC_freq,decreasing = TRUE)[1:1000]))
-
-
-
-#newlist <- list(oldlist, list(someobj))
-
-british_feature <- c()
-american_feature <- c()
-british_bucket <- c()
-american_bucket <- c()
-number_diff <- c()
-
-for (i in 1:2) {
-  british <-sort(BNC_freq,decreasing = TRUE)[1+((i-1)*100):100*i]
-  american <- sort(OANC_freq,decreasing = TRUE)[1+((i-1)*100):100*i]
-  
-  british_feature <-c(british_feature,british) 
-  american_feature <- c(american_feature,american)
-  
+for (i in (1:20)) {
+  x = (i-1)*500 
+  y = 500*i
+  diff_pct <- c(diff_pct,length(setdiff(names(top_american)[x:y],names(top_british)[x:y]))/500)
 }
 
-length(setdiff(names(a),names(b))) == length(setdiff(names(b),names(a)))
+plot(diff_pct)
 
-sort(BNC_freq,decreasing = TRUE)[1+((i-1)*100):100*i]
 ```
 
+##### Dale&Chall's Easy Word http://countwordsworth.com/blog/dale-chall-easy-word-list-text-file/
 
+```{r}
+dale <- read.csv("/Volumes/SD Card/dale.csv",header = FALSE)
+
+dale_list <- c() 
+for (i in dale$V1){
+  dale_list <- c(dale_list,i)
+}
+
+BNC_dale_dfm <- dfm_select(BNC_dfm, features = dale_list,remove_punct = TRUE,remove = stopwords("english"))
+OANC_dale_dfm <- dfm_select(OANC_dfm, features = dale_list, remove_punct = TRUE,remove = stopwords("english"))
+
+# caluclate the % 
+BNC_dale_freq <- colSums(as.matrix(BNC_dale_dfm))
+OANC_dale_freq <- colSums(as.matrix(OANC_dale_dfm))
+
+BNC_dale_weight <- BNC_dale_freq/sum(BNC_dale_freq)
+OANC_dale_weight <- OANC_dale_freq/sum(OANC_dale_freq)
+
+BNC_dale_df <-data.frame(features = names(BNC_dale_weight), BNC_weight = BNC_dale_weight )
+OANC_dale_df <-data.frame(features = names(OANC_dale_weight), OANC_weight = OANC_dale_weight )
+dale_full_df<- merge(x = BNC_dale_df,y = OANC_dale_df,by= "features")
+
+dale_full_df["diff"] <- abs(dale_full_df["BNC_weight"]-dale_full_df["OANC_weight"])
+
+
+
+hist(dale_full_df$BNC_weight, breaks=1000,xlim = c(0.00,0.002))
+hist(dale_full_df$OANC_weight, breaks=1000,xlim = c(0.00,0.002))
+
+mean(dale_full_df$BNC_weight) - mean(dale_full_df$OANC_weight)
+var(dale_full_df$BNC_weight) - var(dale_full_df$OANC_weight)
+
+
+dale_full_df[with(dale_full_df, order(-diff)), ]
+```
+# is there any words outside the list is very frequent? 
+```{r}
+dale <- read.csv("/Volumes/SD Card/dale.csv",header = FALSE)
+
+dale_list <- c() 
+for (i in dale$V1){
+  dale_list <- c(dale_list,i)
+}
+
+BNC_dale_dfm_remove <- dfm_select(BNC_joint_dfm, features = dale_list,selection="remove",remove_punct = TRUE,remove = stopwords("english"))
+OANC_dale_dfm_remove <- dfm_select(OANC_joint_dfm, features = dale_list,selection="remove",remove_punct = TRUE,remove = stopwords("english"))
+
+# caluclate the % 
+BNC_dale_freq_remove <- colSums(as.matrix(BNC_dale_dfm_remove))
+OANC_dale_freq_remove <- colSums(as.matrix(OANC_dale_dfm_remove))
+
+BNC_dale_weight_remove <- BNC_dale_freq_remove/sum(BNC_dale_freq_remove)
+OANC_dale_weight_remove <- OANC_dale_freq_remove/sum(OANC_dale_freq_remove)
+
+BNC_dale_df_rm <-data.frame(features = names(BNC_dale_weight_remove), BNC_weight = BNC_dale_weight_remove )
+OANC_dale_df_rm <-data.frame(features = names(OANC_dale_weight_remove), OANC_weight = OANC_dale_weight_remove )
+dale_full_df_rm<- merge(x = BNC_dale_df_rm,y = OANC_dale_df_rm,by= "features")
+
+dale_full_df_rm["diff"] <- dale_full_df_rm["BNC_weight"]-dale_full_df_rm["OANC_weight"]
+
+
+mean(dale_full_df_rm$BNC_weight) - mean(dale_full_df_rm$OANC_weight)
+var(dale_full_df_rm$BNC_weight) - var(dale_full_df_rm$OANC_weight)
+
+
+dale_full_df_rm[with(dale_full_df_rm, order(-diff)), ]
+
+sum(dale_full_df_rm$diff)
+```
+
+#boostrap 
+```{r}
+for(i in 1:100){
+  for(j in 1:nrow(yearmatrix)){
+    df_inuse <- filter(df1,Year == yearmatrix[j])
+    bootstrapped<-sample_n(df_inuse,20,replace=TRUE)
+    bootstrapped$read_FRE<-textstat_readability(bootstrapped$texts,"Flesch")
+    president_FRE[i,j] <- aggregate(bootstrapped$read_FRE,by=list(bootstrapped$Year),FUN=mean)[,2]
+  } 
+}
+president_FRE_order <- president_FRE[ , order(colnames(president_FRE))]  
+# unsample FRE
+
+
+president_FRE_unsample <- data.frame(matrix(ncol = 40))
+```
 
