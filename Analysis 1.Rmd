@@ -83,7 +83,7 @@ hist(BNC_FRE, breaks=300, col="red",xlim = c(20,80))
 print(length((BNC_FRE)))
 print(mean(BNC_FRE))
 print(sd(BNC_FRE))
-write.csv(BNC_FRE,file= "BNC_FRE.csv")
+#write.csv(BNC_FRE,file= "BNC_FRE.csv")
 
 ```
 
@@ -128,6 +128,11 @@ sum_OANC <- sum(OANC_freq)
 
 BNC_weight <- BNC_freq/sum_BNC
 OANC_weight <- OANC_freq/sum_OANC
+
+
+head(OANC_weight)
+head(BNC_weight)
+
 ```
 
 ### Choose the top 10000 features and sorted by difference ranking in American English and British English 
@@ -144,9 +149,8 @@ full_df <- merge(x = american_df,y = british_df, by = "features", all = TRUE)
 colnames(full_df) = c("features","rank_in_american","rank_in_british")
 full_df["difference"] = abs(full_df["rank_in_american"] - full_df["rank_in_british"])
 
-full_df[with(full_df, order(-difference)), ]
+head(full_df[with(full_df, order(-difference)), ])
 
-a <- kwic(OANC_corpus,"dole",10)
 ```
 
 # look into where does these words pop up 
@@ -213,7 +217,7 @@ mean(dale_full_df$BNC_weight) - mean(dale_full_df$OANC_weight)
 var(dale_full_df$BNC_weight) - var(dale_full_df$OANC_weight)
 
 
-dale_full_df[with(dale_full_df, order(-diff)), ],"dale_incl.csv")
+head(dale_full_df[with(dale_full_df, order(-diff)), ])
 ```
 # is there any words outside the list is very frequent? 
 ```{r}
@@ -248,7 +252,7 @@ sum(dale_full_df_rm$BNC_weight) - sum(dale_full_df_rm$OANC_weight)
 var(dale_full_df_rm$BNC_weight) - var(dale_full_df_rm$OANC_weight)
 
 
-write.csv(dale_full_df_rm[with(dale_full_df_rm, order(-diff)), ],"dale_rm.csv")
+head(dale_full_df_rm[with(dale_full_df_rm, order(-diff)), ])
 
 sum(dale_full_df_rm$diff)
 ```
@@ -275,34 +279,4 @@ write.csv(BNC_DALE,"BNC_DALE.csv")
 
 
 
-
-
-
-#boostrap 
-```{r}
-downsize_boc <- corpus_sample(BNC_sub_corpus, 500, replace = FALSE )
-downsize_dfm <- dfm(downsize_boc,stem = F, remove_punct = TRUE, tolower = T)
-x<-dfm_trim(BNC_dfm,min_count = 30,min_docfreq =20)
-
-for(i in 1:100){
-  british_sample <- downsize
-  for(j in 1:nrow(yearmatrix)){
-    df_inuse <- filter(df1,Year == yearmatrix[j])
-    bootstrapped<-sample_n(df_inuse,20,replace=TRUE)
-    bootstrapped$read_FRE<-textstat_readability(bootstrapped$texts,"Flesch")
-    president_FRE[i,j] <- aggregate(bootstrapped$read_FRE,by=list(bootstrapped$Year),FUN=mean)[,2]
-  } 
-}
-president_FRE_order <- president_FRE[ , order(colnames(president_FRE))]  
-# unsample FRE
-
-
-president_FRE_unsample <- data.frame(matrix(ncol = 40))
-```
-
-
-
-```{r}
-
-```
 
