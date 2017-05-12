@@ -94,10 +94,12 @@ yfit <- dnorm(xfit,mean = mean(OANC_FRE), sd = sd(OANC_FRE))
 xfit1 <- seq(min(BNC_FRE),max(BNC_FRE),length = 4000)
 yfit1 <- dnorm(xfit1,mean = mean(BNC_FRE), sd = sd(BNC_FRE))
 
-plot(xfit, yfit, xlim=c(0,100))
-par(new=TRUE)
-plot(xfit1, yfit1, xlim=c(0,100))
 
+
+
+plot(xfit,yfit,type = "l",lty=2,xlim=c(0,100),
+     xlab="number of documents", ylab="FRE score",main="FRE")
+lines(xfit1,yfit1)
 
 ```
 #t-test of FRE
